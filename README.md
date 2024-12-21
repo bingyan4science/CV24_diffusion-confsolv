@@ -25,6 +25,23 @@ python train.py \
 ```
 
 # Evaluating torsional diffusion model
+```
+python generate_confs.py \
+    --test_csv data/shui(H2O)_finetuned_model_evaluation/shui_test.csv \
+    --inference_steps 20 \
+    --model_dir H2O_models \
+    --out drugs_20steps_shui.pkl \
+    --tqdm \
+    --batch_size 128 \
+    --no_energy
+```
+```
+python evaluate_confs.py \
+    --confs drugs_20steps_shui.pkl \
+    --test_csv data/shui(H2O)_finetuned_model_evaluation/shui_test.csv \
+    --true_mols data/shui(H2O)_finetuned_model_evaluation/dict_groud_true_path_shui.pkl \
+    --n_workers 10
+```
 
 # Training Boltzmann generator with ConfSolv energies
 ```
