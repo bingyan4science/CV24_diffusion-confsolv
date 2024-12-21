@@ -5,6 +5,7 @@ from scipy.stats import bootstrap
 
 from utils.torsion import perturb_batch
 from utils.xtb import *
+from conf_solv.predict_one import predict_single
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -17,9 +18,29 @@ def divergence(model, data, data_gpu, method):
 
 
 def mmff_energy(mol):
-    energy = AllChem.MMFFGetMoleculeForceField(mol, AllChem.MMFFGetMoleculeProperties(mol, mmffVariant='MMFF94s')).CalcEnergy()
-    return energy
+    #energy = AllChem.MMFFGetMoleculeForceField(mol, AllChem.MMFFGetMoleculeProperties(mol, mmffVariant='MMFF94s')).CalcEnergy()
+    #return energy
+    # Get MMFF properties
+    mp = AllChem.MMFFGetMoleculeProperties(mol, mmffVariant='MMFF94s')
+    if mp is None:
+        return None  # Return None if MMFF properties cannot be calculated
+    
+    # Get force field
+    ff = AllChem.MMFFGetMoleculeForceField(mol, mp)
+    if ff is None:
+        return None  # Return None if force field cannot be created
+    
+    # Calculate energy
+    return ff.CalcEnergy()
 
+def solv_energy(mol,solvent='O'):
+    energy, _ = predict_single(
+        mol,
+        solvent,
+        model_path="/scratch/by2192/torsional-diffusion/conf_solv/sample_trained_models",
+        num_cores=-1
+    )
+    return energy
 
 def divergence_full(model, data, data_gpu, eps=0.01):
     score = data_gpu.edge_pred.cpu().numpy()
@@ -118,6 +139,7 @@ def populate_likelihood(mol, data, water=False, xtb=None):
     mol.log_det_jac = log_det_jac(data)
     mol.euclidean_dlogp = mol.dlogp - 0.5 * np.log(np.abs(np.linalg.det(mol.inertia_tensor))) - mol.log_det_jac
     mol.mmff_energy = mmff_energy(mol)
+    #mol.solv_energy = solv_energy(mol,solvent='O')
     if not xtb: return
     res = xtb_energy(mol, dipole=True, path_xtb=xtb)
     if res:

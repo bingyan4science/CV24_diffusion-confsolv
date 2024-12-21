@@ -43,11 +43,20 @@ class BoltzmannResampler:
             populate_likelihood(mol, data_conf, water=False, xtb=None)
             data.pos.append(data_conf.pos)
             energy = mol.mmff_energy
-            logweights.append(-energy / kT - mol.euclidean_dlogp)
+            if energy is None:
+                #import ipdb; ipdb.set_trace()
+                continue
+            #energy = mol.solv_energy
+            else:
+                logweights.append(-energy / kT - mol.euclidean_dlogp)
 
-        weights = np.exp(logweights - np.max(logweights))
-        data.weights = weights / weights.sum()
-        data.ess = 1 / np.sum(data.weights ** 2)
+        if len(logweights) == 0:
+            data.weights = 0
+            data.ess = 0
+        else:
+            weights = np.exp(logweights - np.max(logweights))
+            data.weights = weights / weights.sum()
+            data.ess = 1 / np.sum(data.weights ** 2)
         data.times_seen = 0
         model.train()
         return data.ess
