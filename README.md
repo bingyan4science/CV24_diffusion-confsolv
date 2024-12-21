@@ -14,6 +14,15 @@ pip install e3nn
 ```
 
 # Finetuning torsional diffusion model
+```
+python train.py \
+    --in_node_features=74 \
+    --lr=1e-4 \
+    --restart_dir=./DRUGS_models
+    --data_dir=data/H2O_Pickle \
+    --cache=data/H2O_Pickle \
+    --log_dir=H2O_models
+```
 
 # Evaluating torsional diffusion model
 
